@@ -7,7 +7,7 @@ class CURAllocation(Allocation):
     An allocation strategy that prioritizes robots by (C)onstraint Violations, (U)ncertainty, and (R)isk
     """
 
-    def allocate(self, allocation_metrics):
+    def allocate(self, allocation_metrics, network):
         if "C" in self.cfg.order:
             assert (
                 "constraint_violation" in allocation_metrics

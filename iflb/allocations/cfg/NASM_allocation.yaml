@@ -1,0 +1,4 @@
+# The allocation policy parameters for the SM allocation policy.
+# Alpha and Beta are the parameters for the cosine similarity with state and action vectors
+alpha: 0.99
+beta: 0.01

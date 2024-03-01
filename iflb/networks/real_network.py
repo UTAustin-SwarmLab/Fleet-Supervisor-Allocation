@@ -1,0 +1,31 @@
+from .base_network import BaseNetwork
+import numpy as np
+import pandas as pd
+
+
+class RealNetwork(BaseNetwork):
+    """
+    A network that uses the real network to determine the probability of connection between agents using the real network
+    data.
+    """
+
+    def __init__(self, exp_cfg):
+        super().__init__(exp_cfg)
+
+        # Load the real network data
+        self.real_network_data = pd.read_csv(self.cfg.real_network_data_path)
+
+        network_data = self.real_network_data[self.cfg.real_network_data_key].values
+
+        network_data = network_data[: self.exp_cfg.num_envs]
+
+        # Normalize the network data to be between 0 and 1
+        network_data = (network_data - network_data.min()) / (
+            (1 / (1 - self.cfg.lower_bound)) * (network_data.max() - network_data.min())
+        ) + self.cfg.lower_bound
+
+        self.connection_probability = network_data
+
+        assert np.all(
+            self.connection_probability <= 1
+        ), "Connection probability should be less than 1"

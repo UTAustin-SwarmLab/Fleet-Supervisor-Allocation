@@ -3,12 +3,14 @@ import numpy as np
 import heapq
 
 
-class SMAllocation(Allocation):
+class ASMAllocation(Allocation):
     """
-    An allocation strategy that prioritizes robots by submodular maximization
+    An allocation strategy that prioritizes robots by adaptive submodular maximization
     """
 
-    def allocate(self, allocation_metrics):
+    def allocate(
+        self, allocation_metrics, network, successfull_allocations, failed_allocations
+    ):
         """
         Allocate robots to environments based on submodular maximization using
         facility location objective function.
@@ -23,6 +25,8 @@ class SMAllocation(Allocation):
                 assignment_matrix[:, i] = 0
 
         prev_allocations = assignment_matrix.sum(axis=1)
+
+        prev_allocations[successfull_allocations] = 1
 
         alpha = self.cfg.alpha
         beta = self.cfg.beta
@@ -42,24 +46,25 @@ class SMAllocation(Allocation):
 
         marginal_contrib = -(np.maximum(max_M, M).sum(axis=0) - max_M.sum())
 
-        marg_contr = [(marginal_contrib[i], i) for i in range(len(marginal_contrib))]
+        marg_contr = [
+            (marginal_contrib[i], i)
+            for i in range(len(marginal_contrib))
+            if i not in failed_allocations and i not in successfull_allocations
+        ]
 
         heapq.heapify(marg_contr)
 
-        env_priorities = list()
+        # Find the adaptive submodular maximization for the stochastic submodular maximization
+        while 1:
+            cur_el = heapq.heappop(marg_contr)
+            cur_contr = -(
+                np.maximum(max_M, M[:, cur_el[1]].reshape(-1, 1)).sum() - max_M.sum()
+            ) * network.get_connection_probability(cur_el[1])
 
-        for j in range(self.exp_cfg.num_humans - int(prev_allocations.sum())):
-            while 1:
-                cur_el = heapq.heappop(marg_contr)
-                cur_contr = -(
-                    np.maximum(max_M, M[:, cur_el[1]].reshape(-1, 1)).sum()
-                    - max_M.sum()
-                )
-                if cur_contr <= marg_contr[0][0]:
-                    env_priorities.append(cur_el[1])
-                    max_M = np.maximum(max_M, M[:, cur_el[1]].reshape(-1, 1))
-                    break
-                else:
-                    heapq.heappush(marg_contr, (cur_contr, cur_el[1]))
-
-        return env_priorities
+            if cur_contr <= marg_contr[0][0]:
+                env_priority = cur_el[1]
+                max_M = np.maximum(max_M, M[:, cur_el[1]].reshape(-1, 1))
+                break
+            else:
+                heapq.heappush(marg_contr, (cur_contr, cur_el[1]))
+        return env_priority

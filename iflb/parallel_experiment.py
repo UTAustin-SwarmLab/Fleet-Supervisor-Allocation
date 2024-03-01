@@ -22,7 +22,7 @@ def torchify(x):
 
 
 class ParallelExperiment:
-    def __init__(self, exp_cfg, agent, supervisor, allocation):
+    def __init__(self, exp_cfg, agent, supervisor, allocation, network):
         self.exp_cfg = exp_cfg
         # Logging setup
         self.logdir = os.path.join(
@@ -44,6 +44,7 @@ class ParallelExperiment:
         self.experiment_setup(supervisor)
         self.agent = agent(self.envs, self.exp_cfg, self.logdir)
         self.allocation = allocation(self.exp_cfg)
+        self.network = network(self.exp_cfg)
         # Initially assign humans to the first num_humans envs
         assert self.exp_cfg.num_humans <= self.exp_cfg.num_envs
         # Every env starts in robot control
@@ -84,6 +85,57 @@ class ParallelExperiment:
         # and humans that are already assigned to high priority robots.
         humans_to_keep = set()
 
+        # Every human can be reassigned to a robot
+
+        # Find number of humans that could possibly be reassigned
+        max_humans_to_assign = 0
+        for i in range(self.exp_cfg.num_humans):
+            # Reassign human if they are not yet assigned or
+            if not np.sum(self.assignments[:, i]):
+                max_humans_to_assign += 1
+            # their time is up and they are not resetting a hard failure
+            elif (
+                self.human_timers[i] >= self.exp_cfg.min_int_time
+                and not self.blocked_envs[np.argmax(self.assignments[:, i])]
+            ):
+                max_humans_to_assign += 1
+            # otherwise keep them where they are
+            else:
+                humans_to_keep.add(i)
+
+        # Assign humans but with some probability of connection failure
+        assignment_count = 0
+        human_idx = 0
+        while human_idx < self.exp_cfg.num_humans:
+            # If human is assigned but its allocation won't change, move onto next human.
+            if human_idx in humans_to_keep:
+                human_idx += 1
+            # free humans if possible
+            elif assignment_count >= min(self.exp_cfg.num_envs, len(env_priorities)):
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                self.human_timers[human_idx] = 0
+                human_idx += 1
+            # Check if the next worst robot already has a human assigned.
+            elif self.assignments[env_priorities[assignment_count]].sum():
+                # If so, skip this robot.
+                assignment_count += 1
+            # If we have a human we can re-assign and a robot that doesn't already have a human, re-assign them
+            else:
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                new_env = env_priorities[assignment_count]
+                # If the connection fails, don't assign the human
+                if np.random.rand() < self.network.get_connection_probability(new_env):
+                    self.assignments[new_env][human_idx] = 1
+                    self.human_timers[human_idx] = 0
+
+                assignment_count += 1
+                human_idx += 1
+
+        """
         # Find number of humans that could possibly be reassigned
         max_humans_to_assign = 0
         for i in range(self.exp_cfg.num_humans):
@@ -154,6 +206,150 @@ class ParallelExperiment:
                 self.human_timers[human_idx] = 0
                 assignment_count += 1
                 human_idx += 1
+        """
+
+    def assign_humans_sequentially(self, allocation_metrics, network):
+        """
+        Sequential assignment of humans to robots based on connectivity and allocation metrics
+        """
+        # Make sure there is at most 1 human each robot is assigned to
+        assert 0 <= self.assignments.sum(1).max() <= 1
+
+        # Humans that won't be reallocated this timestep. This includes humans that still have time before they can switch
+        # and humans that are already assigned to high priority robots.
+        humans_to_keep = set()
+
+        # Every human can be reassigned to a robot
+
+        # Find number of humans that could possibly be reassigned
+        max_humans_to_assign = 0
+        for i in range(self.exp_cfg.num_humans):
+            # Reassign human if they are not yet assigned or
+            if not np.sum(self.assignments[:, i]):
+                max_humans_to_assign += 1
+            # their time is up and they are not resetting a hard failure
+            elif (
+                self.human_timers[i] >= self.exp_cfg.min_int_time
+                and not self.blocked_envs[np.argmax(self.assignments[:, i])]
+            ):
+                max_humans_to_assign += 1
+            # otherwise keep them where they are
+            else:
+                humans_to_keep.add(i)
+
+        # Assign humans but with some probability of connection failure
+        assignment_count = 0
+        human_idx = 0
+        successfull_allocations = []
+        failed_allocations = []
+        while human_idx < self.exp_cfg.num_humans:
+            # If human is assigned but its allocation won't change, move onto next human.
+            if human_idx in humans_to_keep:
+                human_idx += 1
+            # free humans if possible
+            elif assignment_count >= min(
+                self.exp_cfg.num_envs, self.exp_cfg.num_humans
+            ):
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                self.human_timers[human_idx] = 0
+                human_idx += 1
+            # If we have a human we can re-assign and a robot that doesn't already have a human, re-assign them
+            else:
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                new_env = self.allocation.allocate(
+                    allocation_metrics,
+                    network,
+                    successfull_allocations,
+                    failed_allocations,
+                )
+
+                # If the connection successfull allocate the human to the robot
+                if np.random.rand() < self.network.get_connection_probability(new_env):
+                    self.assignments[new_env][human_idx] = 1
+                    self.human_timers[human_idx] = 0
+                    successfull_allocations.append(new_env)
+                else:
+                    failed_allocations.append(new_env)
+
+                assignment_count += 1
+                human_idx += 1
+
+        """
+        # Find number of humans that could possibly be reassigned
+        max_humans_to_assign = 0
+        for i in range(self.exp_cfg.num_humans):
+            # Reassign human if they are not yet assigned or
+            if not np.sum(self.assignments[:, i]):
+                max_humans_to_assign += 1
+            # their time is up and they are not resetting a hard failure
+            elif (
+                self.human_timers[i] >= self.exp_cfg.min_int_time
+                and not self.blocked_envs[np.argmax(self.assignments[:, i])]
+            ):
+                max_humans_to_assign += 1
+            # otherwise keep them where they are
+            else:
+                humans_to_keep.add(i)
+
+        assignment_count = 0  # next worst robot index
+        human_idx = 0  # number of reassignable humans accounted for
+        # Use env priorities to identify which humans should not be reassigned
+        while human_idx < max_humans_to_assign and assignment_count < len(
+            env_priorities
+        ):
+            # check the next worst robot.
+            env_assign_idx = env_priorities[assignment_count]
+            # If someone is already assigned to this env...
+            if self.assignments[env_assign_idx].sum():
+                # find out who
+                assigned_human = np.argmax(self.assignments[env_assign_idx])
+                assignment_count += 1
+                # This high priority robot already has a human assigned to it, so we will not reallocate assigned_human
+                humans_to_keep.add(assigned_human)
+                # If assigned_human is about to time out though, we will allocate a human to it, it'll just be the same
+                # human since no need to swap in a new human in this high priority env that still needs help
+                if (
+                    self.human_timers[assigned_human] >= self.exp_cfg.min_int_time
+                    and not self.blocked_envs[np.argmax(self.assignments[:, i])]
+                ):
+                    human_idx += 1
+            else:
+                # If no human assigned, we will be assigning a human, so move to next human.
+                human_idx += 1
+
+        # Actually assign humans
+        assignment_count = 0
+        human_idx = 0
+        while human_idx < self.exp_cfg.num_humans:
+            # If human is assigned but its allocation won't change, move onto next human.
+            if human_idx in humans_to_keep:
+                human_idx += 1
+            # free humans if possible
+            elif assignment_count >= min(self.exp_cfg.num_envs, len(env_priorities)):
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                self.human_timers[human_idx] = 0
+                human_idx += 1
+            # Check if the next worst robot already has a human assigned.
+            elif self.assignments[env_priorities[assignment_count]].sum():
+                # If so, skip this robot.
+                assignment_count += 1
+            # If we have a human we can re-assign and a robot that doesn't already have a human, re-assign them
+            else:
+                if self.assignments[:, human_idx].sum():
+                    current_env = np.argmax(self.assignments[:, human_idx])
+                    self.assignments[current_env][human_idx] = 0
+                new_env = env_priorities[assignment_count]
+                self.assignments[new_env][human_idx] = 1
+                self.human_timers[human_idx] = 0
+                assignment_count += 1
+                human_idx += 1
+        """
 
     def vec_step(self, action_list, allocation_metrics):
         """
@@ -161,16 +357,19 @@ class ParallelExperiment:
         """
         ret = []
 
-        # Get env priorities
-        env_priorities = self.allocation.allocate(allocation_metrics)
-        # Assign humans based on env_priorities
-        self.assign_humans(env_priorities)
+        if self.exp_cfg.allocation == "ASM":
+            self.assign_humans_sequentially(allocation_metrics, self.network)
+        else:
+            # Get env priorities
+            env_priorities = self.allocation.allocate(allocation_metrics, self.network)
+            # Assign humans based on env_priorities
+            self.assign_humans(env_priorities)
+
         # Log all possibly relevant data
         # (human timers / episode steps values here are BEFORE stepping the env)
         step_data = {
             "state": np.copy(self.state.cpu().numpy()),
             "action_list": np.copy(action_list),
-            "env_priorities": np.copy(env_priorities),
             "assignments": np.copy(self.assignments),
             "human_timers": np.copy(self.human_timers),
             "episode_steps": self.episode_steps,
@@ -302,16 +501,19 @@ class ParallelExperiment:
         """
         ret = []
 
-        # Get env priorities
-        env_priorities = self.allocation.allocate(allocation_metrics)
-        # Assign humans based on env_priorities
-        self.assign_humans(env_priorities)
+        if self.exp_cfg.allocation == "ASM":
+            self.assign_humans_sequentially(allocation_metrics, self.network)
+        else:
+            # Get env priorities
+            env_priorities = self.allocation.allocate(allocation_metrics, self.network)
+            # Assign humans based on env_priorities
+            self.assign_humans(env_priorities)
+
         # Log all possibly relevant data
         # (human timers / episode steps values here are BEFORE stepping the env)
         step_data = {
             "state": np.copy(self.state),
             "action_list": np.copy(action_list),
-            "env_priorities": np.copy(env_priorities),
             "assignments": np.copy(self.assignments),
             "human_timers": np.copy(self.human_timers),
             "episode_steps": self.episode_steps,

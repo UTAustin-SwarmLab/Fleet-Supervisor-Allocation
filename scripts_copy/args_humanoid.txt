@@ -5,8 +5,8 @@
 --num_envs=100
 --num_humans=10
 --num_steps=10005
---min_int_time=5
---hard_reset_time=5
+--min_int_time=1
+--hard_reset_time=1
 --expert=GymRL
 --order=CUR
 --risk_thresh=0.5
@@ -20,3 +20,4 @@
 --free_humans
 --num_task_transitions=5000
 --vec_env
+--network=base

@@ -4,6 +4,7 @@ from iflb.parallel_experiment import ParallelExperiment
 from iflb.agents import *
 from iflb.supervisors import *
 from iflb.allocations import *
+from iflb.networks import *
 from dotmap import DotMap
 import yaml
 
@@ -123,11 +124,38 @@ if __name__ == "__main__":
                 default=allocation_cfg[key],
             )
 
+    # load network
+    network = network_map[exp_cfg.network]
+    filepath = osp.join(
+        dirname,
+        "iflb/networks/cfg/{}".format(
+            network_cfg_map.get(exp_cfg.network, "base_network.yaml")
+        ),
+    )
+
+    with open(filepath, "r") as fh:
+        network_cfg = yaml.safe_load(fh)
+    for key in network_cfg:
+        if type(network_cfg[key]) == bool:
+            parser.add_argument(
+                "--{}".format(key), action="store_true", default=network_cfg[key]
+            )
+            parser.add_argument(
+                "--no_{}".format(key), action="store_false", dest="{}".format(key)
+            )
+        else:
+            parser.add_argument(
+                "--{}".format(key),
+                type=type(network_cfg[key]),
+                default=network_cfg[key],
+            )
+
     exp_cfg = vars(parser.parse_known_args()[0])  # get CLI args
     exp_cfg = DotMap(exp_cfg)
     exp_cfg.agent_cfg = DotMap()
     exp_cfg.supervisor_cfg = DotMap()
     exp_cfg.allocation_cfg = DotMap()
+    exp_cfg.network_cfg = DotMap()
 
     # **NOTE**: Assumes that the keys don't overlap among cfg files!
     for key in agent_cfg:
@@ -139,6 +167,9 @@ if __name__ == "__main__":
     for key in allocation_cfg:
         exp_cfg.allocation_cfg[key] = exp_cfg[key]
         del exp_cfg[key]
+    for key in network_cfg:
+        exp_cfg.network_cfg[key] = exp_cfg[key]
+        del exp_cfg[key]
 
     if exp_cfg.vec_env:
         # isaac gym conf loading
@@ -146,5 +177,5 @@ if __name__ == "__main__":
         exp_cfg.isaacgym_cfg = DotMap(ig_cfg)
 
     print("Experiment config:", exp_cfg)
-    experiment = ParallelExperiment(exp_cfg, agent, supervisor, allocation)
+    experiment = ParallelExperiment(exp_cfg, agent, supervisor, allocation, network)
     experiment.run()

@@ -23,7 +23,7 @@ tau_safe: 0.0002
 # NN hidden layer size
 hidden_size: 256
 # replay buffer size
-replay_size: 1000000
+replay_size: 2000000
 # if >=0, the fraction of positive examples in [0,1] to sample for critic training
 pos_fraction: -1.
 # pretrain safety critic on offline data

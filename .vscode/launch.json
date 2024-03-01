@@ -33,13 +33,15 @@
             "args": [
                 "@scripts_copy/args_humanoid.txt",
                 "--logdir_suffix",
-                "SM",
+                "NASM",
                 "--seed",
                 "0",
                 "--allocation",
-                "SM",
+                "NASM",
                 "--warmup_penalty",
                 "1000",
+                "--network",
+                "real"
             ],
             "justMyCode": true
         },
