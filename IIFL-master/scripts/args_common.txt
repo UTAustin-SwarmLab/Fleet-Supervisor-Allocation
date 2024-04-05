@@ -5,8 +5,8 @@
 --num_humans=10
 --num_players=1
 --num_steps=10005
---min_int_time=1
---hard_reset_time=1
+--min_int_time=5
+--hard_reset_time=5
 --expert=GymRL
 --order=CUR
 --no_pretrain_qrisk

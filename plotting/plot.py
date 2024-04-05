@@ -22,15 +22,15 @@ if len(sys.argv) == 4:
     filedatas2 = [fd[:minlen] for fd in filedatas2]
 # load data
 colors = ['#4daf4a', '#ff7f00','#377eb8', '#f781bf', '#a65628', '#984ea3', '#999999', '#e41a1c', '#dede00']
-for i in range(0,len(files),3):
+for i in range(0,len(files),5):
     label = '{}'.format(files[i][files[i].rindex('_')+1:])
-    data = np.array(filedatas[i:i+3])
+    data = np.array(filedatas[i:i+5])
     if len(sys.argv) == 4:
-        data2 = np.array(filedatas2[i:i+3])
+        data2 = np.array(filedatas2[i:i+5])
         LAMBDA=0.01
         data = data-LAMBDA*data2
-    plt.plot(data.mean(axis=0), label=label, color=colors[i//3])
-    plt.fill_between(np.arange(minlen), data.mean(axis=0)-data.std(axis=0), data.mean(axis=0)+data.std(axis=0), alpha=0.2, color=colors[i//3])
+    plt.plot(data.mean(axis=0), label=label, color=colors[i//5])
+    plt.fill_between(np.arange(minlen), data.mean(axis=0)-data.std(axis=0), data.mean(axis=0)+data.std(axis=0), alpha=0.2, color=colors[i//5])
 plt.legend()
 if len(sys.argv) == 4:
     plt.title('{}-{}'.format(KEY, KEY2))

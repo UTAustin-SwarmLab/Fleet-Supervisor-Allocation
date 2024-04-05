@@ -6,8 +6,8 @@
 --num_humans=10
 --num_players=4
 --num_steps=10005
---min_int_time=1
---hard_reset_time=1
+--min_int_time=5
+--hard_reset_time=5
 --supervisor=Analytic
 --order=CUR
 --risk_thresh=0.5
