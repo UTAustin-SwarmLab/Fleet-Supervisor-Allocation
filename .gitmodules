@@ -1,0 +1,3 @@
+[submodule "IsaacGymEnvs"]
+	path = IsaacGymEnvs
+	url = https://github.com/oguzhanakcin/IsaacGymEnvs.git
