@@ -1,11 +1,12 @@
 --cuda
 --env_name=AllegroHand
---logdir=logs
+--logdir=/nas/oguzhan/fleet_supervision/logs
 --logdir_suffix=constraints
 --num_envs=1
 --num_humans=1
 --num_steps=20005
 --min_int_time=5
+--hard_reset_time=5
 --expert=GymRL
 --noise=0.25
 --order=C

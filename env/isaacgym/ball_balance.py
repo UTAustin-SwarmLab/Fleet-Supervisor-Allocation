@@ -117,7 +117,9 @@ class BallBalance(VecTask):
         self.all_bbot_indices = actors_per_env * torch.arange(self.num_envs, dtype=torch.int32, device=self.device)
 
         # vis
+        self.ep_rew_buf += self.rew_buf
         self.axes_geom = gymutil.AxesGeometry(0.2)
+        self.REW_THRESH = 315
 
     def create_sim(self):
         self.dt = self.sim_params.dt
@@ -230,8 +232,8 @@ class BallBalance(VecTask):
     def _create_envs(self, num_envs, spacing, num_per_row):
         lower = gymapi.Vec3(-spacing, -spacing, 0.0)
         upper = gymapi.Vec3(spacing, spacing, spacing)
-
-        asset_root = "."
+        
+        asset_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../assets/isaacgym/mjcf") # "env/assets/isaacgym"
         asset_file = "balance_bot.xml"
 
         asset_path = os.path.join(asset_root, asset_file)
@@ -254,7 +256,7 @@ class BallBalance(VecTask):
         for i in range(self.num_bbot_dofs):
             self.bbot_dof_lower_limits.append(bbot_dof_props['lower'][i])
             self.bbot_dof_upper_limits.append(bbot_dof_props['upper'][i])
-
+        #breakpoint()
         self.bbot_dof_lower_limits = to_torch(self.bbot_dof_lower_limits, device=self.device)
         self.bbot_dof_upper_limits = to_torch(self.bbot_dof_upper_limits, device=self.device)
 
@@ -358,8 +360,14 @@ class BallBalance(VecTask):
             self.ball_radius,
             self.reset_buf, self.progress_buf, self.max_episode_length
         )
+        self.ep_rew_buf += self.rew_buf
+        self.constraint_buf = torch.where(self.ball_positions[..., 2] < self.ball_radius * 2, 1, self.constraint_buf)
+        self.success_buf = torch.where(self.reset_buf == 1, 1, 0)
+        self.success_buf = torch.where(self.constraint_buf == 0, self.success_buf, 0)
+        self.success_buf = torch.where(self.ep_rew_buf > self.REW_THRESH, self.success_buf, 0)
 
     def reset_idx(self, env_ids):
+        if len(env_ids) == 0: return
         num_resets = len(env_ids)
 
         # reset bbot and ball root states
@@ -402,13 +410,14 @@ class BallBalance(VecTask):
 
         self.reset_buf[env_ids] = 0
         self.progress_buf[env_ids] = 0
-
+        self.ep_rew_buf[env_ids] = 0
+        self.constraint_buf[env_ids] = 0
     def pre_physics_step(self, _actions):
 
         # resets
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
-        if len(reset_env_ids) > 0:
-            self.reset_idx(reset_env_ids)
+        # if len(reset_env_ids) > 0:
+        #     self.reset_idx(reset_env_ids)
 
         actions = _actions.to(self.device)
 

@@ -1,6 +1,6 @@
 --cuda
 --env_name=Anymal
---logdir=logs
+--logdir=/nas/oguzhan/fleet_supervision/logs
 --logdir_suffix=demos
 --num_envs=1
 --num_humans=1

@@ -1,6 +1,6 @@
 --cuda
 --env_name=Humanoid
---logdir=logs
+--logdir=/nas/oguzhan/fleet_supervision/logs
 --logdir_suffix=tmp
 --num_envs=100
 --num_humans=10

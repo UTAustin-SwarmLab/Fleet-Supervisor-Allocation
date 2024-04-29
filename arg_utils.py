@@ -16,7 +16,9 @@ def get_parser():
         default="Humanoid",
         help="Choice of environment. Choices: [Humanoid, Anymal, AllegroHand]",
     )
-    parser.add_argument("--logdir", default="logs", help="log directory")
+    parser.add_argument(
+        "--logdir", default="/nas/oguzhan/fleet_supervision/logs", help="log directory"
+    )
     parser.add_argument("--logdir_suffix", default="", help="log directory suffix")
     parser.add_argument("--cuda", action="store_true", help="run on CUDA")
     parser.add_argument("--cnn", action="store_true", help="visual observations")

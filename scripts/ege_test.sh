@@ -1,1 +1,0 @@
-python -m main @scripts/args_ant.txt --logdir_suffix CUR --seed 1 --warmup_penalty 1000 -network base

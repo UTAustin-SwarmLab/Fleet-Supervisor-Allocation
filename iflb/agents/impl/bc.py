@@ -8,6 +8,7 @@ from .replay_memory import ReplayMemory
 from .model import DeterministicPolicy, DeterministicPolicyCNN
 from .qrisk import QRiskWrapper
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import pairwise_distances
 
 
 class BC(object):
@@ -168,6 +169,43 @@ class BC(object):
         action_similarities = cosine_similarity(actions.cpu().numpy())
 
         return state_similarities, action_similarities
+
+    def get_similarity(self, states):
+        """
+        Get cosine similarity between different robots with given
+        states as input and return nxn matrix with pairwise similarity
+        between robots.
+        """
+
+        metric = self.args.allocation_cfg.get("metric", "cosine")
+        similarity_alpha = self.args.allocation_cfg.get("similarity_alpha", 1)
+        similarity_beta = self.args.allocation_cfg.get("similarity_beta", 1)
+
+        states = states.clone().detach()
+        actions = self.get_actions(states, tensor=True)
+
+        if metric == "cosine":
+            state_similarity = cosine_similarity(states.cpu().numpy())
+            action_similarity = cosine_similarity(actions.cpu().numpy())
+        elif metric == "euclidean" or metric == "manhattan":
+            state_similarities = pairwise_distances(states.cpu().numpy(), metric=metric)
+            action_similarities = pairwise_distances(
+                actions.cpu().numpy(), metric=metric
+            )
+
+            # state_similarity = - state_similarities
+            # action_similarity = - action_similarities
+
+            state_similarity = 1 / (1 + similarity_alpha * state_similarities)
+            action_similarity = 1 / (1 + similarity_alpha * action_similarities)
+        else:
+            # If invalid metric is provided print the metric name and raise an error
+            print(f"Invalid Metric: {metric}")
+            raise ValueError(
+                "Invalid Metric is provided. Please use 'cosine', 'euclidean' or 'manhattan'."
+            )
+
+        return state_similarity, action_similarity
 
     def train(self, memory, batch_size):
         """

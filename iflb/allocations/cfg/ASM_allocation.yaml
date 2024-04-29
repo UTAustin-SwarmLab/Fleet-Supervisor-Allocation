@@ -1,4 +1,8 @@
 # The allocation policy parameters for the SM allocation policy.
 # Alpha and Beta are the parameters for the cosine similarity with state and action vectors
 alpha: 0.99
-beta: 0.01
+constraint_alpha: 10000
+metric: "cosine" # Possible values: "cosine", "euclidean", "manhattan"
+similarity_alpha: 1 # similarity_alpha/ (similarity_beta + distance)
+similarity_beta: 1 # similarity_alpha/ (similarity_beta + distance)
+marginal_increase_threshold: 0 # The threshold for the marginal increase in the submodular objective function

@@ -9,36 +9,38 @@ class ASMAllocation(Allocation):
     """
 
     def allocate(
-        self, allocation_metrics, network, successfull_allocations, failed_allocations
+        self,
+        allocation_metrics,
+        network,
+        successfull_allocations,
+        failed_allocations,
+        prev_allocations,
     ):
         """
         Allocate robots to environments based on submodular maximization using
         facility location objective function.
         """
 
-        human_timers = allocation_metrics["human_timers"]
-
-        assignment_matrix = allocation_metrics["assignments"].copy()
-
-        for i in range(self.exp_cfg.num_humans):
-            if human_timers[i] >= self.exp_cfg.min_int_time:
-                assignment_matrix[:, i] = 0
-
-        prev_allocations = assignment_matrix.sum(axis=1)
-
         prev_allocations[successfull_allocations] = 1
 
         alpha = self.cfg.alpha
-        beta = self.cfg.beta
 
         weighted_similarity = (
             alpha * allocation_metrics["state_similarity"]
-            + beta * allocation_metrics["action_similarity"]
+            + (1 - alpha) * allocation_metrics["action_similarity"]
         )
 
         uncertainty = allocation_metrics["uncertainty"]
 
         M = (weighted_similarity * uncertainty).T
+
+        # Add prioritization for environments that are constraint violating
+
+        constraint_violation = allocation_metrics["constraint_violation"]
+
+        contraint_M = np.eye(M.shape[0]) * constraint_violation
+
+        M = M + self.cfg.constraint_alpha * contraint_M
 
         # Based on current allocations find the max M values
 
@@ -67,4 +69,6 @@ class ASMAllocation(Allocation):
                 break
             else:
                 heapq.heappush(marg_contr, (cur_contr, cur_el[1]))
+        
         return env_priority
+    

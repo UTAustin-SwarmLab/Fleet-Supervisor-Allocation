@@ -243,7 +243,7 @@ class SingleTaskParallelILAgent(ParallelAgent):
         else:
             constraint_violation = [env.constraint for env in self.envs]
         uncertainty = self.forward_agent.get_policy_uncertainty(states)
-        state_similarity, action_similarity = self.forward_agent.get_cosine_similarity(
+        state_similarity, action_similarity = self.forward_agent.get_similarity(
             states
         )
 

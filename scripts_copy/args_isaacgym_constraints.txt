@@ -1,6 +1,6 @@
 --cuda
 --env_name=AllegroHand
---logdir=logs
+--logdir=
 --logdir_suffix=constraints
 --num_envs=1
 --num_humans=1

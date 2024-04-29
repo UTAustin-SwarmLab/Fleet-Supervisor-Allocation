@@ -24,17 +24,38 @@ class NASMAllocation(Allocation):
 
         prev_allocations = assignment_matrix.sum(axis=1)
 
-        alpha = self.cfg.alpha
-        beta = self.cfg.beta
-
         weighted_similarity = (
-            alpha * allocation_metrics["state_similarity"]
-            + beta * allocation_metrics["action_similarity"]
+            self.cfg.state_similarity_ratio * allocation_metrics["state_similarity"]
+            + (1 - self.cfg.state_similarity_ratio)
+            * allocation_metrics["action_similarity"]
         )
 
         uncertainty = allocation_metrics["uncertainty"]
 
-        M = (weighted_similarity * uncertainty).T
+        # Assign 0 uncertainty to environments that are lower than the uncertainty threshold
+        uncertainty[uncertainty < self.cfg.uncertainty_thresh] = 0
+
+        risk = allocation_metrics["risk"].reshape(-1)
+
+        # Assign 0 risk to environments that are lower than the risk threshold
+        risk[risk < self.cfg.risk_thresh] = 0
+
+        total_informativeness = (
+            self.cfg.uncertainty_ratio * uncertainty
+            + (1 - self.cfg.uncertainty_ratio) * risk
+        )
+
+        M = (weighted_similarity * total_informativeness).T
+
+        constraint_violation = allocation_metrics["constraint_violation"]
+
+        constraint_M = np.eye(M.shape[0]) * constraint_violation
+
+        # Before the warmup period, don't include constraint violation in the prioritization
+        if self.cfg.warmup_penalty > allocation_metrics["time"]:
+            M = M - self.cfg.constraint_alpha * constraint_M
+        else:
+            M = M + self.cfg.constraint_alpha * constraint_M
 
         # Based on current allocations find the max M values
 
@@ -54,6 +75,9 @@ class NASMAllocation(Allocation):
         # Marginalize Over all the possible allocations based on the current allocations
         # To find non-adaptive submodular maximization for the stochastic submodular maximization
 
+        # If the marginal increase in the submodular objective is lower than a specific threshold stop the allocation
+
+        marginal_increase_flag = False
         for j in range(self.exp_cfg.num_humans - int(prev_allocations.sum())):
             while 1:
                 cur_el = heapq.heappop(marg_contr)
@@ -68,6 +92,10 @@ class NASMAllocation(Allocation):
                         * network.get_connection_probability(cur_el[1])
                     )
                 if cur_contr <= marg_contr[0][0]:
+                    if abs(cur_contr) < self.cfg.marginal_increase_threshold:
+                        marginal_increase_flag = True
+                        break
+
                     env_priorities.append(cur_el[1])
 
                     # Update the max_M values, and the probability of the allocation for successfull and unsuccessful allocations
@@ -92,5 +120,7 @@ class NASMAllocation(Allocation):
                     break
                 else:
                     heapq.heappush(marg_contr, (cur_contr, cur_el[1]))
+            if marginal_increase_flag:
+                break
 
         return env_priorities

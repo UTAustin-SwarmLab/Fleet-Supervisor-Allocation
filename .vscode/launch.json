@@ -37,6 +37,9 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
             "args": [
                 "@scripts_copy/args_humanoid.txt",
                 "--logdir_suffix",
@@ -48,7 +51,21 @@
                 "--warmup_penalty",
                 "1000",
                 "--network",
-                "real"
+                "base",
+                "--metric",
+                "euclidean"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "ifl_rohe_plot",
+            "type": "python",
+            "request": "launch",
+            "program": "plotting/plot_ege_color.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/home/oguzhan-admin/Fleet-Supervisor-Allocation/logs/test_ege",
+                "ROHE",
             ],
             "justMyCode": true
         },

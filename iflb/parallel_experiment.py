@@ -237,6 +237,12 @@ class ParallelExperiment:
             else:
                 humans_to_keep.add(i)
 
+        # Kept allocations from previous timestep which is required to be kept
+        # for the ASM allocation strategy
+        prev_allocations = np.zeros(self.exp_cfg.num_envs)
+        for human_idx in humans_to_keep:
+            prev_allocations[np.argmax(self.assignments[:, human_idx])] = 1
+
         # Assign humans but with some probability of connection failure
         assignment_count = 0
         human_idx = 0
@@ -265,6 +271,7 @@ class ParallelExperiment:
                     network,
                     successfull_allocations,
                     failed_allocations,
+                    prev_allocations,
                 )
 
                 # If the connection successfull allocate the human to the robot
