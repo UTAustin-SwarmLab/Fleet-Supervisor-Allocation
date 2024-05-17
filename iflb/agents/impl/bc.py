@@ -8,6 +8,7 @@ from .replay_memory import ReplayMemory
 from .model import DeterministicPolicy, DeterministicPolicyCNN
 from .qrisk import QRiskWrapper
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import pairwise_distances
 
 
 class BC(object):
@@ -168,6 +169,42 @@ class BC(object):
         action_similarities = cosine_similarity(actions.cpu().numpy())
 
         return state_similarities, action_similarities
+    
+    def get_similarity(self, states):
+        """
+        Get cosine similarity between different robots with given
+        states as input and return nxn matrix with pairwise similarity 
+        between robots.
+        """
+
+        metric = getattr(self.args.allocation_cfg, "metric", "cosine")
+        similarity_alpha = getattr(self.args.allocation_cfg, "similarity_alpha", 1)
+        similarity_beta = getattr(self.args.allocation_cfg, "similarity_beta", 1)
+        
+
+        states = states.clone().detach()
+        actions = self.get_actions(states, tensor=True)
+
+        if metric == "cosine":
+            state_similarities = cosine_similarity(states.cpu().numpy())
+            action_similarities = cosine_similarity(actions.cpu().numpy())
+        elif metric == "euclidean":
+            state_similarities = pairwise_distances(states.cpu().numpy(), metric="euclidean")
+            action_similarities = pairwise_distances(actions.cpu().numpy(), metric="euclidean")
+
+            state_similarity = similarity_alpha / (similarity_beta + state_similarities)
+            action_similarity = similarity_alpha / (similarity_beta + action_similarities)
+        elif metric == "manhattan":
+            state_similarities = pairwise_distances(states.cpu().numpy(), metric="manhattan")
+            action_similarities = pairwise_distances(actions.cpu().numpy(), metric="manhattan")
+
+            state_similarity = similarity_alpha / (similarity_beta + state_similarities)
+            action_similarity = similarity_alpha / (similarity_beta + action_similarities)
+        else:
+            raise ValueError("Invalid metric provided. Please use 'cosine', 'euclidean' or 'manhattan'.")
+        
+        return state_similarity, action_similarity
+
 
     def train(self, memory, batch_size):
         """

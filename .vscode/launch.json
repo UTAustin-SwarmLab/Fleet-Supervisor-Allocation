@@ -53,6 +53,18 @@
             "justMyCode": true
         },
         {
+            "name": "ifl_rohe_plot",
+            "type": "python",
+            "request": "launch",
+            "program": "plotting/plot_ege_color.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/home/oguzhan-admin/Fleet-Supervisor-Allocation/logs/test_ege",
+                "ROHE",
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "IIFL Anymal",
             "type": "python",
             "request": "launch",

@@ -65,7 +65,7 @@ class ParallelExperiment:
             ]
             self.envs = envs
             self.state = np.zeros(
-                (self.exp_cfg.num_envs, *self.envs[0].observation_space.shape),
+                (self.exp_cfg.num_envs, self.envs[0].observation_space.shape),
                 dtype=np.float32,
             )
             for i, env in enumerate(envs):
@@ -84,8 +84,6 @@ class ParallelExperiment:
         # Humans that won't be reallocated this timestep. This includes humans that still have time before they can switch
         # and humans that are already assigned to high priority robots.
         humans_to_keep = set()
-
-        # Every human can be reassigned to a robot
 
         # Find number of humans that could possibly be reassigned
         max_humans_to_assign = 0
@@ -106,9 +104,14 @@ class ParallelExperiment:
         # Assign humans but with some probability of connection failure
         assignment_count = 0
         human_idx = 0
+        failed_assignments = 0
+        failed_human_allocations = [i for i in range(self.exp_cfg.num_humans) if self.blocked_humans[i] > 0]
         while human_idx < self.exp_cfg.num_humans:
             # If human is assigned but its allocation won't change, move onto next human.
             if human_idx in humans_to_keep:
+                human_idx += 1
+            # if the human is blocked, move onto the next human
+            elif human_idx in failed_human_allocations:
                 human_idx += 1
             # free humans if possible
             elif assignment_count >= min(self.exp_cfg.num_envs, len(env_priorities)):
@@ -131,9 +134,15 @@ class ParallelExperiment:
                 if np.random.rand() < self.network.get_connection_probability(new_env):
                     self.assignments[new_env][human_idx] = 1
                     self.human_timers[human_idx] = 0
+                else:
+                    failed_assignments += 1
+                    self.blocked_humans[human_idx] = self.exp_cfg.human_hard_reset_time
 
                 assignment_count += 1
                 human_idx += 1
+
+        # Total Attempted Allocations are the number of failed allocations and successfullse
+        self.total_humans = np.sum(self.assignments) + failed_assignments + len(failed_human_allocations)
 
         """
         # Find number of humans that could possibly be reassigned
@@ -219,8 +228,6 @@ class ParallelExperiment:
         # and humans that are already assigned to high priority robots.
         humans_to_keep = set()
 
-        # Every human can be reassigned to a robot
-
         # Find number of humans that could possibly be reassigned
         max_humans_to_assign = 0
         for i in range(self.exp_cfg.num_humans):
@@ -237,14 +244,25 @@ class ParallelExperiment:
             else:
                 humans_to_keep.add(i)
 
+        # Kept allocations from previous timestep which is required to be kept
+        # for the ASM allocation strategy
+        prev_allocations = np.zeros(self.exp_cfg.num_envs)
+        for human_idx in humans_to_keep:
+            prev_allocations[np.argmax(self.assignments[:, human_idx])] = 1
+
         # Assign humans but with some probability of connection failure
         assignment_count = 0
         human_idx = 0
         successfull_allocations = []
         failed_allocations = []
+        failed_human_allocations = [i for i in range(self.exp_cfg.num_humans) if self.blocked_humans[i] > 0]
+        no_more_allocations = False
         while human_idx < self.exp_cfg.num_humans:
             # If human is assigned but its allocation won't change, move onto next human.
             if human_idx in humans_to_keep:
+                human_idx += 1
+            # if the human is blocked, move onto the next human
+            elif human_idx in failed_human_allocations:
                 human_idx += 1
             # free humans if possible
             elif assignment_count >= min(
@@ -260,24 +278,34 @@ class ParallelExperiment:
                 if self.assignments[:, human_idx].sum():
                     current_env = np.argmax(self.assignments[:, human_idx])
                     self.assignments[current_env][human_idx] = 0
-                new_env = self.allocation.allocate(
-                    allocation_metrics,
-                    network,
-                    successfull_allocations,
-                    failed_allocations,
-                )
+                
+                if not no_more_allocations:
+                    new_env = self.allocation.allocate(
+                        allocation_metrics,
+                        network,
+                        successfull_allocations,
+                        failed_allocations,
+                        prev_allocations,
+                    )
 
-                # If the connection successfull allocate the human to the robot
-                if np.random.rand() < self.network.get_connection_probability(new_env):
-                    self.assignments[new_env][human_idx] = 1
-                    self.human_timers[human_idx] = 0
-                    successfull_allocations.append(new_env)
-                else:
-                    failed_allocations.append(new_env)
+                    if new_env is None:
+                        no_more_allocations = True
+                        continue
+                    
+                    # If the connection successfull allocate the human to the robot
+                    if np.random.rand() < self.network.get_connection_probability(new_env):
+                        self.assignments[new_env][human_idx] = 1
+                        self.human_timers[human_idx] = 0
+                        successfull_allocations.append(new_env)
+                    else:
+                        failed_allocations.append(new_env)
+                        self.blocked_humans[human_idx] = self.exp_cfg.human_hard_reset_time
 
-                assignment_count += 1
+                    assignment_count += 1
                 human_idx += 1
 
+        # Total Attempted Allocations are the number of failed allocations and successfullse
+        self.total_humans = np.sum(self.assignments) + len(failed_allocations) + len(failed_human_allocations)
         """
         # Find number of humans that could possibly be reassigned
         max_humans_to_assign = 0
@@ -371,6 +399,7 @@ class ParallelExperiment:
             "state": np.copy(self.state.cpu().numpy()),
             "action_list": np.copy(action_list),
             "assignments": np.copy(self.assignments),
+            "total_human": np.copy(self.total_humans),
             "human_timers": np.copy(self.human_timers),
             "episode_steps": self.episode_steps,
             "constraint": [],
@@ -383,6 +412,11 @@ class ParallelExperiment:
         use_human_acs = [False] * self.exp_cfg.num_envs
         constraints = self.envs.constraint_buf.cpu().numpy()
         actions = np.array(action_list).copy()
+
+        # Update human timers and blocked humans
+        for i in range(self.exp_cfg.num_humans):
+            if self.blocked_humans[i] > 0:
+                self.blocked_humans[i] -= 1
 
         # Plan and execute actions in each env, with human interventions as necessary
         for env_idx in range(self.exp_cfg.num_envs):
@@ -515,6 +549,7 @@ class ParallelExperiment:
             "state": np.copy(self.state),
             "action_list": np.copy(action_list),
             "assignments": np.copy(self.assignments),
+            "total_human": np.copy(self.total_humans),
             "human_timers": np.copy(self.human_timers),
             "episode_steps": self.episode_steps,
             "constraint": [],
@@ -622,6 +657,7 @@ class ParallelExperiment:
     def reset_all(self):
         self.raw_data = []
         self.human_timers = [0 for _ in range(self.exp_cfg.num_humans)]
+        self.blocked_humans = [0 for _ in range(self.exp_cfg.num_humans)]
         self.blocked_envs = [0 for _ in range(self.exp_cfg.num_envs)]
         self.blocked_env_timers = [
             0 for _ in range(self.exp_cfg.num_envs)
@@ -700,6 +736,7 @@ class ParallelExperiment:
             # add assignment info to allocation metrics
             allocation_metrics["assignments"] = self.assignments.copy()
             allocation_metrics["human_timers"] = self.human_timers.copy()
+            allocation_metrics["blocked_humans"] = self.blocked_humans.copy()
             allocation_metrics["blocked_envs"] = self.blocked_envs.copy()
             allocation_metrics["time"] = self.t
             if self.vec_env:
@@ -724,11 +761,11 @@ class ParallelExperiment:
             if self.vec_env
             else self.envs[0].max_episode_steps
         )
-        t, rew, succ, viol, switch, human, idle = compute_stats(
+        t, rew, succ, viol, switch, human, success_human, idle, rohe = compute_stats(
             self.logdir
         )  # this will also save a run_stats.pkl
         print(
-            "Steps: %d AvgReward: %f Successes: %d Violations: %d Switches: %d Human Acts: %d Idle Time: %d, Num Blocked: %d"
+            "Steps: %d AvgReward: %f Successes: %d Violations: %d Switches: %d Human Acts: %d Sucessfull Human Acts %d Idle Time: %d, Num Blocked: %d ROHE: %f"
             % (
                 t,
                 rew * max_steps / t / self.exp_cfg.num_envs,
@@ -736,8 +773,10 @@ class ParallelExperiment:
                 viol,
                 switch,
                 human,
+                success_human,
                 idle,
                 self.num_blocked,
+                rohe,
             )
         )
 

@@ -142,6 +142,7 @@ class Ant(VecTask):
             self.num_envs
         )
         self.prev_potentials = self.potentials.clone()
+        self.REW_THRESH = 6000
 
     def create_sim(self):
         self.up_axis_idx = 2  # index of up axis: Y=1, Z=2
@@ -174,7 +175,7 @@ class Ant(VecTask):
         upper = gymapi.Vec3(spacing, spacing, spacing)
 
         asset_root = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "../../assets"
+            os.path.dirname(os.path.abspath(__file__)), "../assets/isaacgym"
         )
         asset_file = "mjcf/nv_ant.xml"
 
@@ -285,6 +286,11 @@ class Ant(VecTask):
             self.death_cost,
             self.max_episode_length,
         )
+        self.ep_rew_buf += self.rew_buf
+        self.constraint_buf = torch.where(self.obs_buf[:, 0] < self.termination_height, 1, self.constraint_buf)
+        self.success_buf = torch.where(self.reset_buf == 1, 1, 0)
+        self.success_buf = torch.where(self.constraint_buf == 0, self.success_buf, 0)
+        self.success_buf = torch.where(self.ep_rew_buf > self.REW_THRESH, self.success_buf, 0)
 
     def compute_observations(self):
         self.gym.refresh_dof_state_tensor(self.sim)
@@ -321,6 +327,8 @@ class Ant(VecTask):
 
     def reset_idx(self, env_ids):
         # Randomization can happen only at reset time, since it can reset actor positions on GPU
+        if len(env_ids) == 0: return
+
         if self.randomize:
             self.apply_randomizations(self.randomization_params)
 
@@ -361,6 +369,7 @@ class Ant(VecTask):
 
         self.progress_buf[env_ids] = 0
         self.reset_buf[env_ids] = 0
+        self.constraint_buf[env_ids] = 0
 
     def pre_physics_step(self, actions):
         self.actions = actions.clone().to(self.device)
@@ -373,8 +382,8 @@ class Ant(VecTask):
         self.randomize_buf += 1
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
-        if len(env_ids) > 0:
-            self.reset_idx(env_ids)
+        #if len(env_ids) > 0:
+        #   self.reset_idx(env_ids)
 
         self.compute_observations()
         self.compute_reward(self.actions)

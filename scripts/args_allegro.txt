@@ -1,9 +1,9 @@
 --cuda
 --env_name=AllegroHand
---logdir=logs
+--logdir=logs/AllegroHand_final_experiments/base
 --logdir_suffix=tmp
 --num_envs=100
---num_humans=10
+--num_humans=5
 --num_steps=10005
 --min_int_time=5
 --hard_reset_time=5
@@ -20,3 +20,7 @@
 --free_humans
 --num_task_transitions=5000
 --vec_env
+--marginal_increase_threshold=0.5
+--similarity_alpha=1
+--state_similarity_ratio=1
+--uncertainty_ratio=0.5

@@ -1,4 +1,11 @@
 # The allocation policy parameters for the SM allocation policy.
 # Alpha and Beta are the parameters for the cosine similarity with state and action vectors
-alpha: 0.99
-beta: 0.01
+state_similarity_ratio: 0.00011706705094186032 # The ratio of the state similarity to the action similarity
+constraint_alpha: 10000 # The penalty for the constraint violation
+metric: "euclidean" # Possible values: "cosine", "euclidean", "manhattan"
+similarity_alpha: 4.890631505318913 # 1/ (1 + similarity_alpha * distance)
+marginal_increase_threshold: 0.3509056514506021 # The threshold for the marginal increase in the submodular objective function
+warmup_penalty: 2000 # The penalty for the warmup period
+uncertainty_thresh: 0.1510620362300584 # The threshold for the uncertainty of the policy ensemble
+risk_thresh: 0.19810911568017897 # The threshold for the risk of the policy ensemble
+uncertainty_ratio: 0.09669051343275198 # The ratio of the uncertainty to the risk

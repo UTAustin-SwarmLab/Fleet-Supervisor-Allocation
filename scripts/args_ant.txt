@@ -3,7 +3,7 @@
 --logdir=logs
 --logdir_suffix=tmp
 --num_envs=100
---num_humans=10
+--num_humans=5
 --num_steps=10005
 --min_int_time=5
 --hard_reset_time=5
@@ -13,7 +13,7 @@
 --uncertainty_thresh=0.05
 --batch_size=512
 --updates_per_step=2
---critic_safe_pretraining_steps=1000
+--critic_safe_pretraining_steps=5000
 --num_unsafe_transitions=20000
 --pos_fraction=0.25
 --log_freq=1000

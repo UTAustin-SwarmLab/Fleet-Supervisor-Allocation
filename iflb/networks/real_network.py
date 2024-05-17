@@ -19,6 +19,11 @@ class RealNetwork(BaseNetwork):
 
         network_data = network_data[: self.exp_cfg.num_envs]
 
+        # If the network data is less than self.exp_cfg.num_envs, then raise an error
+        assert len(network_data) == self.exp_cfg.num_envs, "Network data is less than the number of environments"
+
+        network_data = np.log(network_data + 1)
+
         # Normalize the network data to be between 0 and 1
         network_data = (network_data - network_data.min()) / (
             (1 / (1 - self.cfg.lower_bound)) * (network_data.max() - network_data.min())

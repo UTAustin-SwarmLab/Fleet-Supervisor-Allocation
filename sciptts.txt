@@ -1,2 +1,0 @@
-python -m main @scripts/args_ant.txt --logdir_suffix CUR --allocation CUR --seed 1 --warmup_penalty 250 --network base
-python -m main @scripts/args_ballbalance.txt --logdir_suffix CUR --allocation CUR --seed 1 --warmup_penalty 250 --network base
