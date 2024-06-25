@@ -86,8 +86,8 @@ def plot(colors, markers, line_styles, legend_labels):
     sns.set(style="whitegrid")
     fig, ax = plt.subplots(figsize=(8, 8), dpi=600)
 
-    for i in range(0, len(files), 1):
-        data = np.array(filedatas[i : i + 1])
+    for i in range(0, len(files), 3):
+        data = np.array(filedatas[i : i + 3])
         if KEY == "ROHE":
             data = data * 100
         mean_data = data.mean(axis=0)
