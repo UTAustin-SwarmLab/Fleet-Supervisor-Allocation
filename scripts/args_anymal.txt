@@ -1,12 +1,13 @@
 --cuda
 --env_name=Anymal
---logdir=logs/Anymal_final_experiments/base
+--logdir=logs
 --logdir_suffix=tmp
 --num_envs=100
 --num_humans=5
 --num_steps=10005
 --min_int_time=5
 --hard_reset_time=5
+--human_hard_reset_time=5
 --expert=GymRL
 --order=CUR
 --risk_thresh=0.5
@@ -24,3 +25,4 @@
 --similarity_alpha=1
 --state_similarity_ratio=1
 --uncertainty_ratio=0.5
+--human_hard_reset_time=5

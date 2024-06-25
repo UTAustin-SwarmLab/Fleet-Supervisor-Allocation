@@ -1,10 +1,42 @@
+# Description: Runs all allocation policies for Anymal, for 3 seeds each.
+# Change network type to be ["scarce", "fiveg", "scarce", "real"] for 
+# different network types.
+    # scarce --> "Always"
+    # fiveg --> "5G Network"
+    # scarce --> "Mixed-Scarce"
+    # real --> "Ookla"
 
-for i in {1..3}; do
-    python -m main @scripts/args_anymal.txt --env_name Anymal --risk_thresh 0.49668746821959014 --uncertainty_thresh 0.19341546210164895 --critic_safe_pretraining_steps 500 --marginal_increase_threshold 0.694254883935102 --similarity_alpha 1.6398343931530426 --state_similarity_ratio 1.7252904278299146 --uncertainty_ratio 0.055490632202624054 --warmup_penalty 1000 --network base --logdir_suffix NASM --seed $i --allocation NASM &
+# Allocation types are ["NASM", "ASM", "CUR", "random", "UC"]
+    # NASM --> "n-ASA"
+    # ASM --> "ASA"
+    # CUR --> "FD"
+    # random --> "Random"
+    # allocation CUR, order UC --> "FE"
 
-    python -m main @scripts/args_anymal.txt --env_name Anymal  --logdir_suffix F.D. --seed $i --warmup_penalty 1000 --network base --allocation CUR &
 
-    python -m main @scripts/args_anymal.txt --env_name Anymal --logdir_suffix Random --allocation random --seed $i --std_dev 0.05 --action_budget 100 &
+network_type="fiveg"
 
-    python -m main @scripts/args_anymal.txt --env_name Anymal  --logdir_suffix F.E. --seed $i --order UC --network base
+for i in {1..3}; 
+do
+    # Runs with n-ASA allocation                                                                         
+    python -m main @scripts/args_anymal_ASM.txt --network $network_type \
+    --logdir_suffix NASM --seed $i --allocation NASM 
+
+    # Runs with ASA allocation      
+    python -m main @scripts/args_anymal_ASM.txt --network $network_type \
+    --logdir_suffix ASM --seed $i --allocation ASM 
+ 
+    # Runs with FD allocation      
+    python -m main @scripts/args_anymal.txt --logdir_suffix CUR \
+    --seed $i --warmup_penalty 250 --network $network_type --allocation CUR 
+
+    # Runs with Random allocation      
+    python -m main @scripts/args_anymal.txt --logdir_suffix Random \
+    --seed $i --std_dev 0.05 --action_budget 4000 --allocation random \
+    --network $network_type
+
+    # Runs with FE allocation      
+    python -m main @scripts/args_anymal.txt --logdir_suffix Ensemble \
+    --seed $i --order UC --network $network_type --allocation CUR
+
 done

@@ -142,7 +142,7 @@ class Ant(VecTask):
             self.num_envs
         )
         self.prev_potentials = self.potentials.clone()
-        self.REW_THRESH = 6000
+        self.REW_THRESH = 5500
 
     def create_sim(self):
         self.up_axis_idx = 2  # index of up axis: Y=1, Z=2

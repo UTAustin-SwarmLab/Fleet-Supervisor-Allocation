@@ -54,6 +54,12 @@ def get_parser():
         default=0,
         help="number of steps waited before reset completes",
     )
+    parser.add_argument(
+        "--human_hard_reset_time",
+        type=int,
+        default=0,
+        help="number of steps for each human to wait after unsuccessful allocation",
+    )
     parser.add_argument("--log_freq", type=int, default=100, help="log frequency")
     parser.add_argument(
         "--vec_env",

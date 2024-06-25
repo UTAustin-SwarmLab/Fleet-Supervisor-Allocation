@@ -1,9 +1,47 @@
-for i in {1..3}; do
-    python -m main @scripts/args_allegro.txt --env_name AllegroHand --risk_thresh 0.1237800553492419 --uncertainty_thresh 0.20064363566533475 --marginal_increase_threshold 0.03877548214572482 --similarity_alpha 16.143536420083507 --state_similarity_ratio 0.36725692057550907 --uncertainty_ratio 0.526482643854261 --warmup_penalty 1250 --network base --logdir_suffix NASM --seed $i --allocation NASM &
+# Description: Runs all allocation policies for Allegro Hand, for 3 seeds each.
+# Change network type to be ["scarce", "fiveg", "scarce", "real"] for 
+# different network types.
+    # scarce --> "Always"
+    # fiveg --> "5G Network"
+    # scarce --> "Mixed-Scarce"
+    # real --> "Ookla"
 
-    python -m main @scripts/args_allegro.txt --env_name AllegroHand  --logdir_suffix F.D. --seed $i --warmup_penalty 1000 --network base --allocation CUR &
+# Allocation types are ["NASM", "ASM", "CUR", "random", "UC"]
+    # NASM --> "n-ASA"
+    # ASM --> "ASA"
+    # CUR --> "FD"
+    # random --> "Random"
+    # allocation CUR, order UC, Ensemble --> "FE"
+    # TD --> "FD"
 
-    python -m main @scripts/args_allegro.txt --env_name Allegro Hand --logdir_suffix Random --allocation random --seed $i --std_dev 0.05 --action_budget 3000 &
+network_type="fiveg"
 
-    python -m main @scripts/args_allegro.txt --env_name AllegroHand  --logdir_suffix F.E. --seed $i --order UC --network base
+for i in {1..3}; 
+do
+    # Runs with n-ASA allocation                                                                      
+    python -m main @scripts/args_allegro_ASM.txt --network $network_type \
+    --logdir_suffix NASM --seed $i --allocation NASM 
+
+    # Runs with ASA allocation
+    python -m main @scripts/args_allegro_ASM.txt --network $network_type \
+    --logdir_suffix ASM --seed $i --allocation ASM 
+    
+    # Runs with FD allocation
+    python -m main @scripts/args_allegro.txt --logdir_suffix CUR \
+    --seed $i --warmup_penalty 2500 --network $network_type --allocation CUR 
+
+    # Runs with Random allocation
+    python -m main @scripts/args_allegro.txt --logdir_suffix Random \
+    --seed $i --std_dev 0.05 --action_budget 3000 --allocation random \
+    --network $network_type
+
+    # Runs with FE allocation
+    python -m main @scripts/args_allegro.txt --logdir_suffix Ensemble \
+    --seed $i --order UC --network $network_type --allocation CUR
+    
+    # Runs with FT allocation
+    python -m main @scripts/args_allegro.txt --logdir_suffix TD \
+    --seed $i --alpha_weight 0.25 --combined_alpha_thresh 3.25 --goal_critic \
+    --no_safety_critic --allocation TD --network $network_type
+
 done

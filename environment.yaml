@@ -1,4 +1,4 @@
-name: fleet_super
+name: fsa
 channels:
   - defaults
 dependencies:

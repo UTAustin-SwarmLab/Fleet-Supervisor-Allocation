@@ -5,4 +5,4 @@ action_budget: 30000
 # std dev of busy humans wrt max num humans
 std_dev: 0.1
 # whether to prioritize C or not
-constraints: False
+constraints: True

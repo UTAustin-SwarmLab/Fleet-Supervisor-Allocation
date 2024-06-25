@@ -1,0 +1,7 @@
+fiveg_network_data_path: '/home/oguzhan-admin/Fleet-Supervisor-Allocation/iflb/networks/data/ATNT_data.csv'
+latency_key: "upload"
+throughput_key: "upload-throughput"
+latency_upper_limit: 0.6
+throughput_lower_limit: 0.4
+lower_bound: 0.48
+low_probability: 0.015

@@ -3,3 +3,6 @@ isaacgym
 logs
 *.jpg
 IIFL-master
+wandb
+.pyc
+__pycache__/

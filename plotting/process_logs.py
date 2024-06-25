@@ -140,6 +140,6 @@ if __name__ == "__main__":
         args.logdir
     )
     print(
-        "Steps: %d Successes: %d Violations: %d Switches: %d Human Acts: %d Successfull Human Acts %d Idle Time: %d ROHE: %.2f"
+        "Steps: %d Successes: %d Violations: %d Switches: %d Human Acts: %d Successfull Human Acts %d Idle Time: %d ROHE: %f"
         % (t, succ, viol, switch, human, success_human, idle, rohe)
     )

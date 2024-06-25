@@ -415,7 +415,8 @@ class ParallelExperiment:
 
         # Update human timers and blocked humans
         for i in range(self.exp_cfg.num_humans):
-            if self.blocked_humans[i] > 0:
+            
+            if self.blocked_humans[i] > 0 :
                 self.blocked_humans[i] -= 1
 
         # Plan and execute actions in each env, with human interventions as necessary

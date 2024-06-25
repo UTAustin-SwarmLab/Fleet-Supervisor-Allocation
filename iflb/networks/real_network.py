@@ -1,7 +1,7 @@
 from .base_network import BaseNetwork
 import numpy as np
 import pandas as pd
-
+import os
 
 class RealNetwork(BaseNetwork):
     """
@@ -13,7 +13,11 @@ class RealNetwork(BaseNetwork):
         super().__init__(exp_cfg)
 
         # Load the real network data
-        self.real_network_data = pd.read_csv(self.cfg.real_network_data_path)
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        data_directory = os.path.join(script_directory, "data")
+        real_network_data_path = os.path.join(data_directory, "region_stats_a.csv")
+
+        self.real_network_data = pd.read_csv(real_network_data_path)
 
         network_data = self.real_network_data[self.cfg.real_network_data_key].values
 
