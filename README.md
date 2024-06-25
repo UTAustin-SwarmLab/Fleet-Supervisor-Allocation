@@ -47,4 +47,4 @@ Below runs all allocation policies for each task with 3 different seeds each. To
 
 ## Generating Plots
 ----------------------
-All experiment logs are saved to `logs/`. The logs should be organized in a way that (1) for each task there exists a folder (e.g. `logs/humanoid`); (2) in each "task" folder there should be allocation results and each allocation should have three seeds (if you want to try more or fewer seeds modify lines 89 and 90 in the `plotting/plot.py` file). To plot; run `python plotting/plot.py logs/humanoid [METRIC]`, where metric is ROHE, cumulative_successes or something else.
+All experiment logs are saved to `logs/`. The logs should be organized in a way that (1) for each task there exists a folder (e.g. `logs/humanoid`); (2) in each task folder there should be allocation results for that task and each allocation should have three seeds (if you want to try more or fewer seeds, modify lines 89 and 90 in the `plotting/plot.py` file). To plot; run `python plotting/plot.py logs/humanoid [METRIC]`, where metric is ROHE, cumulative_successes or something else.
