@@ -39,7 +39,7 @@ Below runs all allocation policies for each task with 3 different seeds each. To
 ## Allegro Hand
 `. scripts/run_allegro.sh`
 
-## Anymal
+## ANYmal
 `. scripts/run_anymal.sh`
 
 ## Ball Balance
