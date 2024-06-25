@@ -14,9 +14,10 @@
     # allocation CUR, order UC --> "FE"
     # TD --> "FD"
 
+seeds=(1000 2000 3000)
 network_type="base"
 
-for i in {1..3}; 
+for i in "${seeds[@]}"
 do
 
     # Runs with n-ASA allocation                                                                                                         
@@ -38,7 +39,8 @@ do
 
     # Runs with FE allocation                                                                       
     python -m main @scripts/args_ballbalance.txt --logdir_suffix Ensemble \
-    --seed $i --order UC --network $network_type --allocation CUR
+    --seed $i --order UC --network $network_type --allocation CUR \
+    --uncertainty_thresh 0.375
 
     # Runs with FT allocation                                                                       
     python -m main @scripts/args_ballbalance.txt --logdir_suffix TD \
