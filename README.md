@@ -31,7 +31,7 @@ pip install -e .
 ## Running the Code
 ----------------------
 
-Below runs all allocation policies for each task with 3 different seeds each. To change the network configuration of the environment change the `network_type` variable.
+Below codes run all allocation policies for the specified tasks with 3 different seeds for each allocation. To change the network configuration of the environment change the `network_type` variable.
 
 ### Humanoid
 `. scripts/run_humanoid.sh`
