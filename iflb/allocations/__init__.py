@@ -3,6 +3,7 @@ from .CUR_allocation import CURAllocation
 from .TD_allocation import TDAllocation
 from .NASM_allocation import NASMAllocation
 from .ASM_allocation import ASMAllocation
+from .NCUR_allocation import NCURAllocation
 
 
 # Mappings from CLI option strings to allocation strategies
@@ -12,6 +13,7 @@ allocation_map = {
     "TD": TDAllocation,
     "NASM": NASMAllocation,
     "ASM": ASMAllocation,
+    "NCUR": NCURAllocation
 }
 
 allocation_cfg_map = {
@@ -20,4 +22,5 @@ allocation_cfg_map = {
     "random": "random_allocation.yaml",
     "NASM": "NASM_allocation.yaml",
     "ASM": "ASM_allocation.yaml",
+    "NCUR": "NCUR_allocation.yaml"
 }
