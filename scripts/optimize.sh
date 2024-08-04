@@ -1,5 +1,5 @@
 conda activate fsa
-gpu=7
+gpu=5
 network=fiveg
 
 for i in {0..20}; do

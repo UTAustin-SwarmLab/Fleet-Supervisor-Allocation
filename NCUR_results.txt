@@ -1,0 +1,11 @@
+Scarce
+Steps: 10001 AvgReward: 1677.929488 Successes: 190 Violations: 270 Switches: 17584 Human Acts: 5 Sucessfull Human Acts 44781 Idle Time: 718932, Num Blocked: 70 ROHE: 0.003808
+LOGDIR:  logs/2024-08-04_10-13-50_Humanoid_NCUR
+
+Real
+Steps: 10001 AvgReward: 3983.760214 Successes: 398 Violations: 744 Switches: 16754 Human Acts: 5 Sucessfull Human Acts 43642 Idle Time: 317872, Num Blocked: 23 ROHE: 0.007974
+LOGDIR:  logs/2024-08-04_10-41-40_Humanoid_NCUR
+
+5G
+Steps: 10001 AvgReward: 4820.427782 Successes: 468 Violations: 821 Switches: 16061 Human Acts: 5 Sucessfull Human Acts 41955 Idle Time: 181707, Num Blocked: 8 ROHE: 0.009379
+LOGDIR:  logs/2024-08-04_10-42-03_Humanoid_NCUR
