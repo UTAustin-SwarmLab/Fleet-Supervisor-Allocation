@@ -1,10 +1,10 @@
 conda activate fsa
-gpu=4
+gpu=1
 network=scarce
 
-for i in {0..20}; do
-CUDA_VISIBLE_DEVICES=$gpu python -m optuna_optimize_humanoid_scarce @scripts/args_humanoid.txt \
-    --warmup_penalty 1000 \
+for i in {0..10}; do
+CUDA_VISIBLE_DEVICES=$gpu python -m optuna_optimize_anymal_scarce @scripts/args_anymal.txt \
+    --warmup_penalty 250 \
     --allocation CUR \
     --seed 0 \
     --network $network \

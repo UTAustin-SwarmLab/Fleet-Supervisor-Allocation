@@ -15,37 +15,53 @@ import seaborn as sns
 colors = sns.color_palette("tab10")
 
 allocation_colors = {
-    "NCUR": colors[0],
-    "NCUR_0.6": colors[1],
-    "CUR": colors[2]
+    "ASM": colors[0],
+    "NASM": colors[1],
+    "CUR": colors[2],
+    "NCUR": colors[3],
+    "NCUR_0.6": colors[4],
+    "NCUR_0.3":colors[5],
+    "NCUR_0.4":colors[6],
 }
 
 markers = {
+    "ASM": "o",
+    "NASM": "^",
+    "CUR": "s",
     "NCUR": "o",
     "NCUR_0.6": "^",
-    "CUR": "s"
+    "NCUR_0.4":"v",
+    "NCUR_0.3":"h",
 }
 
 line_styles = {
-    "NCUR": "--",
+    "ASM": "--",
+    "NASM": "-",
+    "CUR": "--",
+    "NCUR": ":",
     "NCUR_0.6": "-",
-    "CUR": ":",
+    "NCUR_0.4":"-.",
+    "NCUR_0.3":"-.",
 }
 
 legend_labels = {
-    "NCUR": "NFD(connection threshold=0.7)",
-    "NCUR_0.6": "NFD(connection threshold=0.6)",
+    "ASM": "ASA",
+    "NASM": "n-ASA",
+    "NCUR": "FD(connection threshold > 0.2)",
+    "NCUR_0.6": "FD(connection threshold=0.6)",
+    "NCUR_0.4": "FD(connection threshold=0.4)",
+    "NCUR_0.3": "FD(connection threshold=0.3)",
     "CUR": "FD"
 }
 
 def plot(colors, markers, line_styles, legend_labels):
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         assert False, "usage: python plot.py [logdir] [key]"
 
 
     directory = sys.argv[1]
     KEY = sys.argv[2]  # e.g. 'cumulative_successes'
-
+    special_network = False
     files = sorted(os.listdir(directory), key=lambda x: x[::-1])
     filesdatas = [
         pickle.load(
@@ -58,13 +74,36 @@ def plot(colors, markers, line_styles, legend_labels):
 
     allocation_keys = []
     for file in files:
-        if "NCUR" in file and "NCUR_0.6" not in file:
-            allocation_keys.append("NCUR")
-        elif "NCUR_0.6" in file:
-            allocation_keys.append("NCUR_0.6")
-        elif "CUR" in file:
-            allocation_keys.append("CUR")
-
+        if special_network:
+            if "NCUR" in file:
+                allocation_keys.append("NCUR")
+            elif "CUR" in file and "NCUR" not in file:
+                allocation_keys.append("CUR")
+            elif "ASM" and "NASM" not in file:
+                allocation_keys.append("ASM")
+            elif "NASM" in file:
+                allocation_keys.append("NASM")
+        else:
+            if (
+                "NCUR" in file 
+                and "0.6" not in file 
+                and "0.3" not in file 
+                and "0.4" not in file
+            ):
+                allocation_keys.append("NCUR")
+            elif "CUR" in file and "NCUR" not in file:
+                allocation_keys.append("CUR")
+            elif "NCUR_0.6" in file:
+                allocation_keys.append("NCUR_0.6")
+            elif "NCUR_0.4" in file:
+                allocation_keys.append("NCUR_0.4")
+            elif "NCUR_0.3" in file:
+                allocation_keys.append("NCUR_0.3")
+            elif "ASM" and "NASM" not in file:
+                allocation_keys.append("ASM")
+            elif "NASM" in file:
+                allocation_keys.append("NASM")
+        
     sns.set(style="whitegrid")
     fig, ax = plt.subplots(figsize=(8, 8), dpi=600)
 
@@ -77,7 +116,7 @@ def plot(colors, markers, line_styles, legend_labels):
         sns.lineplot(
             x=np.arange(minlen),
             y=mean_data,
-            label=legend_labels[allocation_keys[i]],
+            #label=legend_labels[allocation_keys[i]],
             color=allocation_colors[allocation_keys[i]],
             linestyle=line_styles[allocation_keys[i]],
             marker=markers[allocation_keys[i]],
@@ -87,8 +126,9 @@ def plot(colors, markers, line_styles, legend_labels):
             ax=ax
         )
 
-        fill_below = mean_data - data.std(axis=0) 
-        fill_above = mean_data + data.std(axis=0)
+        
+        fill_below = (mean_data - data.std(axis=0)/2)
+        fill_above = (mean_data + data.std(axis=0)/2)
 
         # to avoid negative values due to std_deviation
         fill_below = np.where(fill_below < 0, 0, fill_below) 
@@ -98,13 +138,13 @@ def plot(colors, markers, line_styles, legend_labels):
             np.arange(minlen),
             fill_below,
             fill_above,
-            alpha=0.3,
+            alpha=0.2,
             color=allocation_colors[allocation_keys[i]],
         )
 
     ax.set_xlabel("Time Steps (t)")
     ax.set_ylabel(KEY.replace("_", " ").title())
-    ax.legend()
+    #ax.legend()
 
 
     # plt.title('{}'.format(KEY))
