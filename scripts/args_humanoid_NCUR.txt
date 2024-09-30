@@ -22,3 +22,4 @@
 --num_task_transitions=5000
 --vec_env
 --connection_thresh=0.7
+--warmup_penalty=1000

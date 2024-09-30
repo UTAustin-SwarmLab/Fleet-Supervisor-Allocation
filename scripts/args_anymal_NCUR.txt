@@ -27,3 +27,4 @@
 --uncertainty_ratio=0.5
 --human_hard_reset_time=5
 --connection_thresh=0.7
+--warmup_penalty=250

@@ -26,3 +26,4 @@
 --state_similarity_ratio=1
 --uncertainty_ratio=0.5
 --connection_thresh=0.7
+--warmup_penalty=2500
