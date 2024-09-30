@@ -1,8 +1,12 @@
 isaacgym
 logs
 *.jpg
+*.png
 IIFL-master
 wandb
 .pyc
 __pycache__/
 swarmcluster3copy/
+allocation_data_cum_succ
+.vscode/
+explain_numerical
