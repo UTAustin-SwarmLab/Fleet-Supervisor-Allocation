@@ -7,11 +7,12 @@ class TDAllocation(Allocation):
     Implementation of Fleet-ThriftyDAgger: linear combination of novelty + risk
     """
 
-    def __init__(self, exp_cfg):
+    def __init__(self, exp_cfg, network):
         self.exp_cfg = exp_cfg
         self.cfg = exp_cfg.allocation_cfg
         self.risk_data = []
         self.novelty_data = []
+        self.network_connection_probabilities = np.copy(network.connection_probability)
 
     def allocate(self, allocation_metrics, network):
         alpha = self.cfg.alpha_weight

@@ -3,7 +3,7 @@ import numpy as np
 import heapq
 
 
-class NASMAllocation(Allocation):
+class NASAAllocation(Allocation):
     """
     An allocation strategy that prioritizes robots by submodular maximization
     """
@@ -91,7 +91,7 @@ class NASMAllocation(Allocation):
                             - max_M[k].sum()
                         )
                         * probability[k]
-                        * network.get_connection_probability(cur_el[1])
+                        * self.network_connection_probabilities[cur_el[1]]
                     )
                 if cur_contr <= marg_contr[0][0]:
                     if abs(cur_contr) < self.cfg.marginal_increase_threshold:
@@ -109,14 +109,14 @@ class NASMAllocation(Allocation):
                         )
                         probability.append(
                             probability[k]
-                            * network.get_connection_probability(cur_el[1])
+                            * self.network_connection_probabilities[cur_el[1]]
                         )
 
                         # Unsuccessfull allocation
                         max_M.append(max_M[k])
                         probability.append(
                             probability[k]
-                            * (1 - network.get_connection_probability(cur_el[1]))
+                            * (1 - self.network_connection_probabilities[cur_el[1]])
                         )
 
                     break

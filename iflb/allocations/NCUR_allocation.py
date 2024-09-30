@@ -36,7 +36,8 @@ class NCURAllocation(Allocation):
         for i in range(self.exp_cfg.num_envs):
             # Check the probability of connection to the robot
             # If below threshold, do not tele-operate the robot.
-            connection_probability = network.get_connection_probability(i)
+            connection_probability = self.network_connection_probabilities[i]
+
             if connection_probability < self.cfg.connection_thresh:
                 connection = 0
             else:
@@ -74,6 +75,7 @@ class NCURAllocation(Allocation):
                 (cv <= 0 or "C" not in self.cfg.order)
                 and (risk == 0 or "R" not in self.cfg.order)
                 and (uncertainty == 0 or "U" not in self.cfg.order)
+                and (connection == 0 or "N" not in self.cfg.order)
             ):
                 # free human
                 if i not in free_idx:
@@ -97,6 +99,9 @@ class NCURAllocation(Allocation):
         env_priorities = sorted(
             range(len(priorities)), key=lambda x: priorities[x], reverse=True
         )
+        env_priorities = [
+            i for i in env_priorities if self.network_connection_probabilities[i] >= self.cfg.connection_thresh
+            ] 
         if self.cfg.free_humans:
             return env_priorities[: self.exp_cfg.num_envs - num_to_free]
         else:

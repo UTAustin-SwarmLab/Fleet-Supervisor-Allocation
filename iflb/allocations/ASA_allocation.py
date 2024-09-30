@@ -3,7 +3,7 @@ import numpy as np
 import heapq
 
 
-class ASMAllocation(Allocation):
+class ASAAllocation(Allocation):
     """
     An allocation strategy that prioritizes robots by adaptive submodular maximization
     """
@@ -83,7 +83,7 @@ class ASMAllocation(Allocation):
             cur_el = heapq.heappop(marg_contr)
             cur_contr = -(
                 np.maximum(max_M, M[:, cur_el[1]].reshape(-1, 1)).sum() - max_M.sum()
-            ) * network.get_connection_probability(cur_el[1])
+            ) * self.network_connection_probabilities[cur_el[1]]
 
             if cur_contr <= marg_contr[0][0]:
                 if abs(cur_contr) < self.cfg.marginal_increase_threshold:
