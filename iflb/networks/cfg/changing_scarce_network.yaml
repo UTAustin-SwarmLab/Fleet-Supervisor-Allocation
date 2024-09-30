@@ -1,0 +1,5 @@
+low_connection_probability: 0.2
+mix_ratio: 0.7
+high_connection_probability: 0.9
+change_start_time: 0.2
+change_end_time: 0.8

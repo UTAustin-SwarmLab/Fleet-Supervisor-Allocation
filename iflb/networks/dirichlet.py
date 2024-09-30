@@ -1,10 +1,13 @@
-from .base_network import BaseNetwork
+"""Dirichlet Network module."""
+
 import numpy as np
+
+from .always import BaseNetwork
 
 
 class DirichletNetwork(BaseNetwork):
     """
-    A network that uses the Drichlet distribution to determine the probability of connection between agents.
+    A network that uses the Drichlet distribution.
     """
 
     def __init__(self, exp_cfg):

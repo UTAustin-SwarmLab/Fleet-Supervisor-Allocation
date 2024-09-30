@@ -1,21 +1,27 @@
-from .dirichlet_network import DirichletNetwork
-from .real_network import RealNetwork
-from .base_network import BaseNetwork
-from .scarce_network import ScarceNetwork
-from .fiveg_network import FiveGNetwork
+"""Networks module."""
+
+from .ookla import OoklaNetwork
+from .base import BaseNetwork
+from .always import AlwaysNetwork
+from .mixed_scarce import MixedScarceNetwork
+from .fiveg import FiveGNetwork
+from .changing_scarce import ChangingScarceNetwork
+from .dirichlet import DirichletNetwork
 
 network_map = {
     "base": BaseNetwork,
-    "dirichlet": DirichletNetwork,
-    "real": RealNetwork,
-    "scarce": ScarceNetwork,
+    "always": AlwaysNetwork,
+    "ookla": OoklaNetwork,
+    "mixed-scarce": MixedScarceNetwork,
     "fiveg": FiveGNetwork,
-
+    "changing-scarce": ChangingScarceNetwork,
+    "dirichlet": DirichletNetwork
 }
 
 network_cfg_map = {
-    "dirichlet": "dirichlet_network.yaml",
-    "real": "real_network.yaml",
-    "scarce": "scarce_network.yaml",
-    "fiveg": "fiveg_network.yaml"
+    "ookla": "ookla_network.yaml",
+    "mixed-scarce": "mixed_scarce_network.yaml",
+    "fiveg": "fiveg_network.yaml",
+    "changing-scarce": "changing_scarce_network.yaml",
+    "dirichlet": "dirichlet_network.yaml"
 }

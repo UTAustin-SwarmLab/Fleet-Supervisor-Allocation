@@ -1,9 +1,14 @@
-from .base_network import BaseNetwork
-import numpy as np
-import pandas as pd
+"""Ookla Network."""
+
 import os
 
-class RealNetwork(BaseNetwork):
+import numpy as np
+import pandas as pd
+
+from .always import BaseNetwork
+
+
+class OoklaNetwork(BaseNetwork):
     """
     A network that uses the real network to determine the probability of connection between agents using the real network
     data.

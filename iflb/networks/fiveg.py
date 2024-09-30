@@ -1,7 +1,11 @@
-from .base_network import BaseNetwork
+"""FiveG network module."""
+
+import os
+
 import numpy as np
 import pandas as pd
-import os
+
+from .always import BaseNetwork
 
 
 class FiveGNetwork(BaseNetwork):

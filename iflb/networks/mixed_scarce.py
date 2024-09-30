@@ -1,8 +1,11 @@
-from .base_network import BaseNetwork
+"""MixedScarceNetwork class."""
+
 import numpy as np
 
+from .always import BaseNetwork
 
-class ScarceNetwork(BaseNetwork):
+
+class MixedScarceNetwork(BaseNetwork):
     """
     A network that uses the Drichlet distribution to determine the probability of connection between agents.
     """
